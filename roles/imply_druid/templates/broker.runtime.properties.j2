@@ -1,0 +1,25 @@
+{{ ansible_managed }}
+
+druid.service=druid/broker
+druid.port={{ broker_druid_port }}
+
+# HTTP server settings
+druid.server.http.numThreads={{ broker_http_numthreads }}
+
+# HTTP client settings
+druid.broker.http.numConnections={{ broker_http_numconnections }}
+druid.broker.http.maxQueuedBytes={{ broker_http_maxqueuebytes }}
+
+# Processing threads and buffers
+druid.processing.buffer.sizeBytes={{ broker_processing_buffer_sizebytes }}
+druid.processing.numMergeBuffers={{ broker_processing_num_mergebuffers }}
+druid.processing.numThreads={{ broker_processing_num_threads }}
+druid.processing.tmpDir={{ broker_processing_tmp_dir }}
+
+# Query cache disabled -- push down caching and merging instead
+druid.broker.cache.useCache=false
+druid.broker.cache.populateCache=false
+
+# SQL
+druid.sql.enable=true
+

@@ -1,0 +1,1 @@
+{{ zookeeper_id | default(groups.tag_vmgroup_druidmaster.index(inventory_hostname) + 1)}}

@@ -1,0 +1,15 @@
+- name: Add Zulu key
+  shell:
+    cmd: apt-key adv --keyserver hkp://162.213.33.8:80 --recv-keys B1998361219BD9C9
+  tags: java
+
+- name: Add Azulsystems repository
+  shell:
+    cmd: apt-add-repository 'deb http://repos.azulsystems.com/ubuntu stable main'
+  tags: java
+
+- name: Install Java
+  apt:
+    name: "{{ java_package_name }}"
+    update_cache: yes
+  tags: jdk

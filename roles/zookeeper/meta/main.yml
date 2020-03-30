@@ -1,0 +1,3 @@
+dependencies:
+  - role: azul_jdk
+  - role: confluent_repo

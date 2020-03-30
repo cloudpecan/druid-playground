@@ -1,0 +1,13 @@
+- name: Create virtual network inteface card
+  azure_rm_networkinterface:
+    resource_group: "{{ rg }}"
+    name: "{{ nic_name }}{{item}}"
+    virtual_network: "{{ vnet }}"
+    subnet: "{{ subnet }}"
+    ip_configurations:
+      - name: "{{ ipconfig_name }}"
+        public_ip_address_name: "{{ public_ip_name }}{{item}}"
+    create_with_security_group: False
+    tags:
+      provisioner: ansible
+  with_sequence: start="{{StartCount}}" end="{{EndCount}}"

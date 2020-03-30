@@ -1,0 +1,115 @@
+- fail:
+    msg: SSL generation type must be explicitly defined and equal to 'self_signed' OR 'custom'
+  when: ssl_type is not defined
+
+- set_fact:
+     cert_gen_host: "{{ play_hosts | first }}"
+  tags: always
+
+- name: Generate temp directory
+  delegate_to: localhost
+  become: no
+  command: mktemp -d "{{ lookup('env', 'TMPDIR') | default('/tmp', true) }}/ansible.XXXX"
+  register: temp_dir
+  run_once: true
+  when: ssl_type == 'self_signed'
+
+- debug:
+    msg: "{{ temp_dir }}"
+  when: ssl_type == 'self_signed'
+
+- name: Clean artifact path
+  file:
+    state: absent
+    path: "{{ cert_dir }}"
+
+- name: Create SSL certificate directory
+  file:
+    path: "{{ cert_dir }}"
+    state: directory
+    mode: 0755
+
+- name: Create SSL certs
+  script: "{{role_path}}/scripts/certs-create.sh {{ ssl_jks_password }} {{ ssl_keystore_trustore_prefix }}"
+  args:
+    chdir: "{{ cert_dir }}/"
+    creates: "{{ cert_dir }}/{{ ssl_keystore_trustore_prefix }}.keystore.jks"
+  when: ssl_type == 'self_signed'
+
+- name: Copy private SSL certificates from Ansible Vault
+  become: yes
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ cert_dir }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o="
+  with_items:
+     - "{{ certificates }}"
+  no_log: true
+  when: ssl_type == 'custom'
+  tags: certs-custom-deploy
+
+- name: Create SSL certs
+  script: "{{role_path}}/scripts/create-jks.sh {{ ssl_jks_password }} {{ ssl_keystore_trustore_prefix }}"
+  args:
+    chdir: "{{ cert_dir }}/"
+    creates: "{{ cert_dir }}/{{ ssl_keystore_trustore_prefix }}.keystore.jks"
+  when: ssl_type == 'custom'
+  tags: certs-custom-deploy
+
+- name: Compress certificate dir
+  archive:
+    path: "{{ cert_dir }}"
+    dest: "{{ cert_files }}"
+  when: 
+    - inventory_hostname == cert_gen_host
+    - ssl_type == 'self_signed'
+
+- name: Fetch certificate files from remote server to host
+  become: no
+  fetch:
+    src: "{{ cert_files }}"
+    dest: "{{ temp_dir.stdout}}/"
+    mode: 0774
+    flat: yes
+    fail_on_missing: yes
+  when: 
+    - inventory_hostname == cert_gen_host
+    - ssl_type == 'self_signed'
+
+- name: Clean artifact path
+  file:
+    state: absent
+    path: "{{ cert_dir }}/"
+  when: 
+    - inventory_hostname != cert_gen_host
+    - ssl_type == 'self_signed'
+
+- name: Create ssl certificate directory
+  file:
+    path: "{{ cert_dir }}"
+    state: directory
+    mode: 0755
+  when: 
+    - inventory_hostname != cert_gen_host 
+    - ssl_type == 'self_signed'
+
+- name: Copy certificate files to remote server from host
+  copy:
+    src: "{{  temp_dir.stdout  }}/{{ cert_compressed  }}"
+    dest: "{{ cert_dir }}"
+    mode: 0774
+  when: 
+    - inventory_hostname != cert_gen_host
+    - ssl_type == 'self_signed'
+
+- name: Uncompress certificate dir
+  unarchive:
+    src: "{{ cert_dir }}/{{ cert_compressed }}"
+    dest: "{{ cert_dir }}"
+    extra_opts: [--strip-components=1]
+    remote_src: yes
+  when: 
+    - inventory_hostname != cert_gen_host
+    - ssl_type == 'self_signed'

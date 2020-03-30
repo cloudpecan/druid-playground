@@ -1,0 +1,13 @@
+-server
+-Xms{{ overlord_ram }}
+-Xmx{{ overlord_ram }}
+-XX:+ExitOnOutOfMemoryError
+-Duser.timezone=UTC
+-Dfile.encoding=UTF-8
+-Djava.io.tmpdir={{ overlord_tmpdir }}
+-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.port=9012
+-Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false

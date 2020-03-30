@@ -1,0 +1,7 @@
+- name: Create Resource Group
+  azure_rm_resourcegroup:
+    name: "{{ rg }}"
+    location: "{{ location }}"
+    tags:
+      provisioner: ansible
+  register: rg

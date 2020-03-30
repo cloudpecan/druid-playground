@@ -1,0 +1,200 @@
+- name: Copy Druid Runtime Common Properties Configuration File
+  template:
+    src: common.runtime.properties.j2
+    dest: "{{ config_dir_common }}/common.runtime.properties"
+    mode: 0640
+  notify:
+    - restart query
+    - restart data
+    - restart masternozk
+    - restart masterwithzk
+  tags:
+    - deploy_common_runtime_properties
+    - deploy_all_configs
+
+- name: Create Temp Coordinator Directory
+  file:
+    path: "{{ coordinator_tmp_dir }}"
+    state: directory
+    mode: 0755
+
+- name: Copy Coordinator JVM Properies Configuration File
+  template:
+    src: coordinator.jvm.config.j2
+    dest: "{{ config_dir_coordinator }}/jvm.config"
+    mode: 0640
+  notify:
+    - restart masternozk
+    - restart masterwithzk
+  tags:
+    - deploy_coordinator_jvm_config
+    - deploy_all_configs
+
+- name: Copy Historical Runtime Properies Configuration File
+  template:
+    src: historical.runtime.properties.j2
+    dest: "{{ config_dir_historical }}/runtime.properties"
+    mode: 0640
+  notify:
+    - restart data
+  tags:
+    - deploy_historical_runtime_config
+    - deploy_all_configs
+
+- name: Copy Historical JVM Config Configuration File
+  template:
+    src: historical.jvm.config.j2
+    dest: "{{ config_dir_historical }}/jvm.config"
+    mode: 0640
+  notify:
+    - restart data
+  tags:
+    - deploy_historical_jvm_config
+    - deploy_all_configs
+
+- name: Copy Middle Manager Runtime Properies Configuration File
+  template:
+    src: middlemanager.runtime.properties.j2
+    dest: "{{ config_dir_middlemanager }}/runtime.properties"
+    mode: 0640
+  notify:
+    - restart data
+  tags:
+    - deploy_historical_runtime_config
+    - deploy_all_configs
+
+- name: Copy Middle Manager JVM Config File
+  template:
+    src: middlemanager.jvm.config.j2
+    dest: "{{ config_dir_middlemanager }}/jvm.config"
+    mode: 0640
+  notify:
+    - restart data
+  tags:
+    - deploy_middlemanager_jvm_config
+    - deploy_all_configs
+
+- name: Copy Overlord JVM Config File
+  template:
+    src: overlord.jvm.config.j2
+    dest: "{{ config_dir_overlord }}/jvm.config"
+    mode: 0640
+  notify:
+    - restart masternozk
+    - restart masterwithzk
+  tags:
+    - deplo_overlord_jvm_config
+    - deploy_all_configs
+
+- name: Copy Broker Runtime Config File
+  template:
+    src: broker.runtime.properties.j2
+    dest: "{{ config_dir_broker }}/runtime.properties"
+    mode: 0640
+  notify:
+    - restart query
+  tags:
+    - deploy_broker_runtime_config
+    - deploy_all_configs
+
+- name: Copy Broker JVM Config File
+  template:
+    src: broker.jvm.config.j2
+    dest: "{{ config_dir_broker }}/jvm.config"
+    mode: 0640
+  notify:
+    - restart query
+  tags:
+    - deploy_broker_jvm_config
+    - deploy_all_configs
+
+- name: Copy Router JVM Config File
+  template:
+    src: router.jvm.config.j2
+    dest: "{{ config_dir_router }}/jvm.config"
+    mode: 0640
+  notify:
+    - restart query
+  tags:
+    - deploy_router_jvm_config
+    - deploy_all_configs
+
+- name: Install Pivot Configuration
+  template:
+    src: pivot.config.yaml.j2
+    dest: "{{ symlink }}/conf/pivot/config.yaml"
+    mode: 0640
+  notify:
+    - restart query
+  tags:
+    - deploy_pivot_config
+    - deploy_all_configs
+
+- name: Install Pivot license key
+  become: yes
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ config_dir_pivot }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart query
+  with_items:
+    - "{{ license_key }}"
+  no_log: true
+  tags:
+    - deploy_pivot_license_key
+    - deploy_all_configs
+
+- name: Install Systemctl Script For Master When Zookeeper Is Running On The Same Host
+  template:
+    src: masterwithzk.service.j2
+    dest: "{{ systemd_dir }}/masterwithzk.service"
+    mode: 0644
+  notify:
+    - stop zk
+    - restart masterwithzk
+  tags:
+    - deploy_master_systemd
+    - deploy_all_systemd_scripts
+    - deploy_all_configs
+
+- name: Install Systemctl Script For Master When Zookeeper Is NOT Running On The Same Host
+  template:
+    src: masternozk.service.j2
+    dest: "{{ systemd_dir }}/masternozk.service"
+    mode: 0644
+  notify:
+    - restart masternozk
+  tags:
+    - deploy_master_systemd
+    - deploy_all_systemd_scripts
+    - deploy_all_configs
+
+- name: Install Systemctl Script For Data Process
+  template:
+    src: data.service.j2
+    dest: "{{ systemd_dir }}/data.service"
+    mode: 0644
+  notify:
+    - restart data
+  tags:
+    - deploy_data_systemd
+    - deploy_all_systemd_scripts
+    - deploy_all_configs
+
+- name: Install Systemctl Script For Query Process
+  template:
+    src: query.service.j2
+    dest: "{{ systemd_dir }}/query.service"
+    mode: 0644
+  notify:
+    - restart query
+  tags:
+    - deploy_query_systemd
+    - deploy_all_systemd_scripts
+    - deploy_all_configs
+
+- name: Force all notified handlers to run
+  meta: flush_handlers

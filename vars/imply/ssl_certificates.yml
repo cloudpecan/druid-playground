@@ -1,0 +1,21 @@
+certificates:
+  - name: "cert.pem"
+    content: |
+      -----BEGIN CERTIFICATE-----
+      <add-content>
+      -----END CERTIFICATE-----
+  - name: "cert.key"
+    content: |
+      -----BEGIN EC PRIVATE KEY-----
+      <add-content>
+      -----END EC PRIVATE KEY-----
+  - name: "intermediate.pem"
+    content: |
+      -----BEGIN CERTIFICATE-----
+      <add-content>
+      -----END CERTIFICATE-----
+  - name: "root.pem"
+    content: |
+      -----BEGIN CERTIFICATE-----
+      <add-content>
+      -----END CERTIFICATE-----

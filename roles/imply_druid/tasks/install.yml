@@ -1,0 +1,163 @@
+
+- name: Create Base Installation Directory
+  file:
+    path: "{{ basedir }}"
+    state: directory
+    mode: 0755
+    recurse: true
+  tags:
+    - install
+
+- name: Get Imply Druid Distribution
+  get_url:
+    url: "{{ url }}"
+    dest: "{{ basedir }}"
+  tags:
+    - extract_imply_distribution
+    - download_imply_distribution
+    - install
+
+- name: Extract Imply Tar File
+  unarchive:
+    src: "{{ basedir }}/{{ distribution }}"
+    dest: "{{ basedir }}"
+    extra_opts: [--strip-components=1]
+    remote_src: true
+  tags:
+    - extract_imply_distribution
+    - install
+
+- name: Create Symbolic Link
+  file:
+    src: "{{ item.0 }}"
+    dest: "{{ item.1 }}"
+    state: link
+    force: yes
+  with_together:
+    - "{{ symlink_target }}"
+    - "{{ symlink }}"
+  tags:
+    - extract_imply_distribution
+    - create_imply_distribution_symlink
+    - install
+
+- name: Pull/Download Druid Extensions
+  shell:
+    cmd: "{{ pull_deps_command }}"
+    chdir: "{{ symlink_target }}"
+  tags:
+    - druid_extension
+    - install
+
+- name: List Downloaded Druid Extensions
+  command: "ls {{ symlink }}/dist/druid/extensions/druid-azure-extensions/"
+  register: dir_out
+  tags:
+    - list_downloaded_extensions
+    - install
+
+- name: Show Output for the Downloaded Druid Extensions
+  debug: var={{item}}
+  with_items: dir_out.stdout_lines
+  tags:
+    - list_downloaded_extensions
+    - install
+
+- name: Create mount point data directories
+  file:
+    path: "{{item}}"
+    state: directory
+    mode: 0755
+  with_items: "{{ druid_datadir }}"
+  tags:
+    - prepare_mounted_disks
+    - install
+  when: "'druiddata' in group_names"
+
+- name: Partition devices
+  parted:
+    device: "{{ item }}"
+    number: 1
+    label: gpt
+    state: present
+    flags: [lvm]
+  with_items: "{{ druid_devices }}"
+  when: "'druiddata' in group_names"
+  tags:
+    - prepare_mounted_disks
+    - install
+  ignore_errors: True
+
+- name: Format drives
+  filesystem:
+    fstype: "{{ fs_type }}"
+    dev: "{{ item }}"
+  with_items: "{{ druid_devices }}"
+  when: "'druiddata' in group_names"
+  tags:
+    - prepare_mounted_disks
+    - install
+  ignore_errors: True
+
+- name: Mount Data Disks To Created Data Directories
+  mount:
+    path: "{{ item[0] }}"
+    src: "{{ item[1] }}"
+    fstype: "{{ fs_type }}"
+    state: mounted
+  with_together:
+    - "{{ druid_datadir }}"
+    - "{{ druid_devices }}"
+  when: "'druiddata' in group_names"
+  tags:
+    - prepare_mounted_disks
+    - install
+  ignore_errors: True
+
+- name: Create Temp Processing Directory
+  file:
+    path: "{{ druid_processing_tmpdir }}"
+    state: directory
+    mode: 0755
+  tags:
+    - install
+
+- name: Create Middle Manager Task directory
+  file:
+    path: "{{ middle_manager_druid_indexer_base_task_dir }}"
+    state: directory
+    mode: 0644
+  tags:
+    - install
+
+- name: Create Temp Middle Manager Processing Directory
+  file:
+    path: "{{ middle_manager_processing_tmpdir }}"
+    state: directory
+    mode: 0644
+  tags:
+    - install
+
+- name: Create Temp Overload Processing Directory
+  file:
+    path: "{{ overlord_tmpdir }}"
+    state: directory
+    mode: 0644
+  tags:
+    - install
+
+- name: Create Druid Segment Location Directory Path
+  file:
+    path: "{{ druid_segment_cache_location }}"
+    state: directory
+    mode: 0644
+  tags:
+    - install
+
+- name: Create Temp Broker Processing Directory
+  file:
+    path: "{{ broker_processing_tmp_dir }}"
+    state: directory
+    mode: 0644
+  tags:
+    - install

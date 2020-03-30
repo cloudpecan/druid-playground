@@ -1,0 +1,7 @@
+- name: Create Virtual Network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ rg }}"
+    name: "{{ virtual_network }}"
+    address_prefixes: "{{ address_prefixes_cidr  }}"
+    tags:
+      provisioner: ansible

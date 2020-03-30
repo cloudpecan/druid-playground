@@ -1,0 +1,6 @@
+- name: reload systemd
+  command: systemctl daemon-reload
+- name: restart zookeeper
+  systemd:
+    name: "{{zk_service_name}}"
+    state: restarted

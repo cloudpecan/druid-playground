@@ -1,0 +1,40 @@
+
+- name: daemon-reload
+  systemd: daemon_reload=yes
+
+- name: restart masternozk
+  systemd:
+    state: restarted
+    name: masternozk
+  when:
+    - "'tag_vmgroup_druidmaster' in group_names"
+    - not masterwithzk
+
+- name: stop zk
+  systemd:
+    state: stopped
+    name: "{{ zk_service_name }}"
+  when:
+    - "'tag_vmgroup_druidmaster' in group_names"
+    - masterwithzk|bool
+
+- name: restart masterwithzk
+  systemd:
+    state: restarted
+    name: masterwithzk
+  when:
+    - "'tag_vmgroup_druidmaster' in group_names"
+    -  masterwithzk|bool
+
+- name: restart data
+  systemd:
+    state: restarted
+    name: data
+  when: "'tag_vmgroup_druiddata' in group_names"
+
+- name: restart query
+  systemd:
+    state: restarted
+    name: query
+  when: "'tag_vmgroup_druidquery' in group_names"
+

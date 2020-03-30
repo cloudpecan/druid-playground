@@ -1,0 +1,15 @@
+-server
+-Xms{{ broker_ram }}
+-Xmx{{ broker_ram }}
+-XX:MaxDirectMemorySize={{ broker_max_direct_memory_size }}
+-XX:+ExitOnOutOfMemoryError
+-Duser.timezone=UTC
+-Dfile.encoding=UTF-8
+-Djava.io.tmpdir={{ broker_tmpdir }}
+-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.port=9014
+-Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false
+

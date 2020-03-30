@@ -1,0 +1,22 @@
+- name: Create Virtual Machine
+#  no_log: True
+  azure_rm_virtualmachine:
+    resource_group: "{{ rg }}"
+    name: "{{ vm_name }}{{ item }}"
+    vm_size: "{{ vm_size }}"
+    managed_disk_type: "{{ default_disk_type }}"
+    admin_username: "{{ admin_username }}"
+    ssh_password_enabled: False
+    ssh_public_keys:
+      - path: "{{ ssh_public_key_path }}"
+        key_data: "{{ ssh_key }}"
+    network_interfaces: "{{ nic }}{{ item }}"
+    image:
+      offer: "{{ image_offer }}"
+      publisher: "{{ image_publisher }}"
+      sku:  "{{ sku_type }}"
+      version: "{{ image_version }}"
+    tags:
+      vmgroup: "{{ tag }}"
+      provisioner: ansible
+  with_sequence: start="{{StartCount}}" end="{{EndCount}}"

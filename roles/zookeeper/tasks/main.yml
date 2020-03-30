@@ -1,0 +1,94 @@
+- name: Install the Zookeeper Packages
+  apt:
+    name: "{{ item }}={{ package_version }}"
+    update_cache: yes
+  loop: "{{ zookeeper_packages }}"
+
+- name: Zookeeper Create Group
+  group:
+    name: "{{ confluent_group }}"
+  tags: zk_user
+
+- name: Zookeeper Create User
+  user:
+    name: "{{ confluent_user }}"
+    comment: "Zookeeper User"
+    system: yes
+    group: "{{ confluent_group }}"
+  tags: zk_user
+
+- name: Create Zookeeper Data Directories
+  file:
+    path: "{{ item }}"
+    owner: "{{ confluent_user }}"
+    group: "{{ confluent_group}}"
+    state: directory
+    recurse: yes
+    mode: 755
+  with_items: 
+    - "{{ zk.properties.dataLogDir }}"
+  tags: zk_directory
+
+- name: Create Zookeeper Runtime Log Directories
+  file:
+    path: "{{ item }}"
+    owner: "{{ confluent_user }}"
+    group: "{{ confluent_group }}"
+    recurse: yes
+    state: directory
+    mode: 755
+  with_items:
+    - "{{ zookeeper_runtime_logs }}"
+  tags: zk_directory
+
+- name: Zookeeper Myid File
+  template:
+    src: myid.j2
+    dest: "{{ zk.properties.dataLogDir }}/myid"
+    mode: 0644
+    owner: "{{ confluent_user }}"
+    group: "{{ confluent_group }}"
+  tags: zk_myid
+
+- name: Zookeeper Create Config
+  template:
+    src: zookeeper.properties.j2
+    dest: "{{zk.config_file }}"
+    mode: 0644
+    owner: "{{ confluent_user }}"
+    group: "{{ confluent_group }}"
+  register: zookeeper_config
+  notify:
+    - restart zookeeper
+  tags: 
+    - zk_properties
+    - config
+
+- name: Create Service Override Directory
+  file:
+    path: "{{zk.systemd_override}}"
+    owner: "{{ confluent_user }}"
+    group: "{{ confluent_group }}"
+    state: directory
+    mode: 0644
+  tags: zk_config
+
+- name: Write Service Overrides
+  template:
+    src: override.conf.j2
+    dest: "{{zk.systemd_override}}/override.conf"
+    mode: 0644
+    owner: "{{ confluent_user }}"
+    group: "{{ confluent_group }}"
+  notify:
+    - reload systemd
+    - restart zookeeper
+  tags: zk_config
+
+- name: Enable Zookeeper Service
+  systemd:
+    name: "{{ zk_service_name }}"
+    enabled: "{{ zk.systemd.enabled }}"
+    state: "{{ zk.systemd.state }}"
+
+- meta: flush_handlers

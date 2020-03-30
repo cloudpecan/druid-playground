@@ -1,0 +1,21 @@
+- name: Imply Druid Distribution Provisioning
+  hosts: tag_vmgroup_druidmaster,tag_vmgroup_druiddata,tag_vmgroup_druidquery
+  become: yes
+  vars_files:
+    - "{{ imply_license_key }}"
+    - "{{ ssl_custom_certificates }}"
+    - "{{ cluster_vars }}"
+  tasks:
+    - fail:
+        msg: SSL variable ssl_type must be explicitly defined and equal to 'self_signed' OR 'custom'. Plain text currently not supported.
+      when: ssl_type is not defined
+    - include_role:
+        name: ssl_generation
+      vars:
+        ssl_keystore_truststore_prefix: "{{ ssl_keystore_truststore_prefix }}"
+        ssl_jks_password: "{{ druid_ssl_jks_password }}"
+        ssl_type: "{{ ssl_type }}"
+    - include_role:
+        name: imply_druid
+      tags:
+        - always

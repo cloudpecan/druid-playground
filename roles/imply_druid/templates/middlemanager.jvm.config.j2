@@ -1,0 +1,14 @@
+-server
+-Xms{{ middlemanager_ram }}
+-Xmx{{ middlemanager_ram }}
+-XX:+ExitOnOutOfMemoryError
+-Duser.timezone=UTC
+-Dfile.encoding=UTF-8
+-Dhadoop.hadoop.tmp.dir={{ middlemanager_hadoop_tmp_dir }}
+-Djava.io.tmpdir={{ middlemanager_tmp_dir }}
+-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.port=60101
+-Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false

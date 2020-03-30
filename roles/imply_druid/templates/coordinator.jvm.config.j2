@@ -1,0 +1,13 @@
+-server
+-Xms{{ coordinator_ram }}
+-Xmx{{ coordinator_ram }}
+-XX:+ExitOnOutOfMemoryError
+-Duser.timezone=UTC
+-Dfile.encoding=UTF-8
+-Djava.io.tmpdir={{ coordinator_tmp_dir }} 
+-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.port=9015
+-Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false

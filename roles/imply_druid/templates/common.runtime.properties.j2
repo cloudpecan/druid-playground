@@ -1,0 +1,85 @@
+{{ ansible_managed }}
+#
+# Extensions
+#
+
+druid.extensions.directory=dist/druid/extensions/
+druid.extensions.hadoopDependenciesDir=dist/druid/hadoop-dependencies 
+druid.extensions.loadList=["simple-client-sslcontext","druid-histogram","druid-datasketches","mysql-metadata-storage","druid-kafka-indexing-service","druid-azure-extensions","druid-lookups-cached-global","clarity-emitter"]
+
+#
+# Logging
+#
+
+# Log all runtime properties on startup. Disable to avoid logging properties on startup:
+druid.startup.logging.logProperties=true
+
+#
+# Zookeeper
+#
+
+druid.zk.service.host={% for host in groups['tag_vmgroup_druidmaster'] %}{% if loop.index > 1%},{% endif %}{{ host }}:{{ zk_client_port }}{% endfor %}
+
+druid.zk.paths.base=/druid
+
+
+######## use wildcard certs #########
+druid.enablePlaintextPort=false
+druid.enableTlsPort=true
+druid.server.https.keyStorePath={{ ssl_cert_dest_dir }}/{{ ssl_keystore_trustore_prefix }}.keystore.jks
+druid.server.https.keyStoreType=jks
+druid.server.https.certAlias=mykey
+druid.client.https.protocol=TLSv1.2
+druid.client.https.trustStoreType=jks
+druid.client.https.trustStorePath={{ ssl_cert_dest_dir }}/{{ ssl_keystore_trustore_prefix }}.truststore.jks
+druid.client.https.trustStoreAlgorithm=PKIX
+druid.server.https.keyManagerPassword={{ druid_ssl_jks_password }}
+druid.server.https.keyStorePassword={{ druid_ssl_jks_password }}
+druid.client.https.trustStorePassword={{ druid_ssl_jks_password }}
+
+
+# For MySQL:
+druid.metadata.storage.type=mysql
+druid.metadata.storage.connector.connectURI={{ connection_string_meta_data_uri }}
+druid.metadata.storage.connector.user={{ connection_string_meta_data_user }}
+druid.metadata.storage.connector.password={{ connection_string_meta_data_password }}
+druid.metadata.mysql.ssl.useSSL=true
+druid.metadata.mysql.ssl.verifyServerCertificate=false
+
+#
+# Deep storage
+#
+
+# For local disk (only viable in a cluster if this is a network mount):
+druid.storage.type={{ druid_storage_type }}
+druid.azure.account={{ druid_azure_account }}
+druid.azure.key={{ druid_azure_key }}
+druid.azure.container={{ druid_azure_segment_container }}
+
+#
+# Indexing service logs
+#
+
+druid.indexer.logs.type={{ druid_indexer_logs_type }}
+druid.indexer.logs.container={{ druid_indexer_logs_container }}
+druid.indexer.logs.prefix=logs={{ druid_indexer_logs_prefix }}
+
+#
+# Service discovery
+#
+
+druid.selectors.indexing.serviceName=druid/overlord
+druid.selectors.coordinator.serviceName=druid/coordinator
+
+#
+# Monitoring
+#
+
+druid.monitoring.monitors=["org.apache.druid.java.util.metrics.JvmMonitor"]
+druid.emitter=logging
+druid.emitter.logging.logLevel=debug
+
+druid.emitter.clarity.recipientBaseUrl={{ druid_clarity_url }} 
+druid.emitter.clarity.basicAuthentication={{ druid_clarity_basicAuthentication }}
+druid.emitter.clarity.clusterName={{ druid_clarity_clustername }} 
+

@@ -1,0 +1,97 @@
+## infra
+
+region: switzerlandnorth
+prefix: druid
+resource_group: "{{ prefix }}-playground-rg"
+virtual_network: "{{ prefix }}-vnet"
+subnet_name: "{{ prefix }}-db-subnet"
+address_prefixes: "10.0.0.0/16"
+subnet_address_prefixes: "10.0.1.0/24"
+public_ip_sku: Standard
+public_ip_allocation: Static
+public_ip: "public-ip"
+disk_type: "Standard_LRS"
+ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDRYMw5i82ohiauwF10zT9PRzm8Qo3gnupn4IN5URriJs2aRWfbqtZNsxd2qiqyGWA7D2lJa2Vjh4h6nJicyKI3+PgNo1V6XCd4J7kbClGabF6oj0I9zwcyOtU8QilMaUgZ304kiz4MBC3dQc+PdjYNuQ3S2a0WXWUqvZR8/C/bVGLwMWPU3awsY0Bg+pKX0hwoOXlXJ3wgDBF+YV77iCV4htU8WMfinYCGSQn0d4waq3imwzjQ41bJt1TXnNRJTlshJwuCiDl47wSvJT7ee67U5QT8MDNmUx2l0zyghoa+XGqLdJw9yNUgQPhyDz+jaE5/f5o8mJOzgCxW7kznEiWh aakhtar@asifs-macbook-pro.home
+ssh_key_path: "/home/{{ admin_user }}/.ssh/authorized_keys"
+nsg_name: "{{ prefix }}-nsg"
+nic_name: "{{ prefix }}-nic"
+admin_user: druidadmin
+
+druid_db: druid
+pivot_db: pivot
+druid_storage: druidstgaccount
+
+druid_mysql_dbs:
+  - "{{ druid_db }}"
+  - "{{ pivot_db }}"
+
+druid_servers:
+  - { start: 1, end: 3, server: master, image_size: Standard_A2m_v2, offer: UbuntuServer, publisher: Canonical, sku: 18.04-LTS, version: latest, vm_group: druidmaster }
+  - { start: 1, end: 2, server: query, image_size: Standard_A2m_v2, offer: UbuntuServer, publisher: Canonical, sku: 18.04-LTS, version: latest, vm_group: druidquery }
+  - { start: 1, end: 2, server: data, image_size: Standard_A2m_v2, offer: UbuntuServer, publisher: Canonical, sku: 18.04-LTS, version: latest, vm_group: druiddata }
+
+nsg_rules:
+  - { name: SSH, protocol: Tcp,  destination_port_range: 22, access: Allow, priority: 100, direction: Inbound }
+
+mysql_server_name: mysqlmetadata
+mysql_server_name_fqdn: "{{ mysql_server_name }}.mysql.database.azure.com"
+mysql_username: metadataadmin
+mysql_user_connection: metadataadmin@mysqlmetadata
+
+mysql_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  61333266643961343036336636303835613462383831613538653534616364666330343665306662
+  3439303165343336336530363237356162616636313332370a616337656536663730653038663031
+  34643032633731353231363366613933663235646462346466653864663065633432633064663839
+  6262653262356461350a663138353966636238393735373033313134613761643637346431663736
+  3537
+## zookeeper
+
+dataLogDir: /mnt/var/zookeeper
+dataDir: /mnt/var/zookeeper
+kafka_broker_heap_options: -Xmx1g -Xms1g
+zookeeper_heap_options: -Xmx1g -Xms1g
+zookeeper_open_file_limit: 999999
+zookeeper_runtime_logs: /mnt/var/log/zookeeper
+masterwithzk: True
+
+## druid
+
+imply_version: 3.1.5.2
+imply_license_key: vars/imply/imply_license_key.yml
+ssl_custom_certificates: vars/imply/ssl_certificates.yml
+
+segment_container: segment-container
+log_container: log-container
+
+
+druid_storage_type:  azure
+druid_azure_container: "{{ druid_storage }}"
+druid_clarity_url: https://cc.imply.io/d/organisation
+druid_clarity_clustername: imply-azure-test
+
+druid_clarity_basicAuthentication: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  64353139366465623164383464656435316434343231636530663365336161313336356464336437
+  3738616337366636303432653333623963333964363534370a323562623935306438643837313964
+  32383433373063336238363834383065623766373135623634376661383962313634613364323865
+  3834343663383739620a653737653262363166393066313833386331356262343035363639663938
+  31616461373230336235666432326630346664306634373439613237666361336231646639383634
+  3438356132643938643030383231623263376533303338663866
+
+druid_https_pivot_cert: snakeoil-ca-1.crt
+druid_https_pivot_key: snakeoil-ca-1.key
+
+# $(az storage account keys list --resource-group ${RG_NAME} --account-name ${STORAGE_NAME} | jq -r '.[].value' | head -1)
+druid_azure_key:
+druid_ssl_jks_password: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  30616435306566343234653266313663613832626261346162613032366330346665306266373932
+  6363363839383566346336383566643330333462633833320a636563316536323562376530333634
+  32333737663737326166363463333762616537386233633033383065373234373662663665623130
+  3634623362646536340a396535613661646534366233333135646430633063636431383361666338
+  6164
+
+ssl_cert_dest_dir: /var/ssl/private
+ssl_keystore_trustore_prefix: host
+

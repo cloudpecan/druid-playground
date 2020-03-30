@@ -1,0 +1,32 @@
+zookeeper_service_environment_overrides:
+  KAFKA_HEAP_OPTS: "{{ zookeeper_heap_options }}"
+  LOG_DIR: "{{ zookeeper_runtime_logs }}"
+
+zookeeper_service_overrides:
+  LimitNOFILE: "{{ zookeeper_open_file_limit }}"
+
+zookeeper_packages:
+  - confluent-kafka-2.12
+
+confluent_user: cp-kafka
+confluent_group: confluent
+zk_service_name: confluent-zookeeper
+zk_client_port: 2181
+
+zk:
+  config_file: /etc/kafka/zookeeper.properties
+  systemd_file: /usr/lib/systemd/system/confluent-zookeeper.service
+  systemd_override: /etc/systemd/system/confluent-zookeeper.service.d
+  properties:
+    tickTime: 2000
+    clientPort: 2181
+    maxClientCnxns: 0
+    initLimit: 5
+    syncLimit: 2
+    autopurge.snapRetainCount: 10
+    autopurge.purgeInterval: 1
+    dataDir: "{{ dataDir }}"
+    dataLogDir: "{{ dataLogDir }}"
+  systemd:
+    enabled: yes
+    state: started

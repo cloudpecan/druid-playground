@@ -1,0 +1,26 @@
+{{ ansible_managed }}
+
+druid.service=druid/middlemanager
+druid.port={{ middle_manager_druid_port }}
+
+# Number of tasks per middleManager
+druid.worker.capacity={{ middle_manager_druid_worker_capacity }}
+
+# Task launch parameters
+druid.indexer.runner.javaOpts=-server -Xmx1g -Duser.timezone=UTC -XX:MaxDirectMemorySize=8g -Dfile.encoding=UTF-8 -XX:+ExitOnOutOfMemoryError -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+druid.indexer.task.baseTaskDir={{ middle_manager_druid_indexer_base_task_dir }}
+druid.indexer.task.restoreTasksOnRestart=true
+
+# HTTP server threads
+druid.server.http.numThreads=50
+
+# Processing threads and buffers
+druid.processing.buffer.sizeBytes={{ middle_manager_druid_processing_buffer_sizebytes }}
+druid.processing.numMergeBuffers=2
+druid.processing.numThreads=2
+druid.processing.tmpDir= {{ middle_manager_processing_tmpdir }}
+
+# Hadoop indexing
+#druid.indexer.task.hadoopWorkingPath=var/druid/hadoop-tmp
+#druid.indexer.task.defaultHadoopCoordinates=["org.apache.hadoop:hadoop-client:2.8.3", "org.apache.hadoop:hadoop-aws:2.8.3"]
+

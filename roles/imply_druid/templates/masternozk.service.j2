@@ -1,0 +1,15 @@
+{{ ansible_managed }}
+
+[Unit]
+Description=master with no zookeeper service (i.e. zookeeper runs on a separate host) 
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart={{ symlink }}/bin/supervise -c {{ symlink }}/conf/supervise/master-no-zk.conf
+[Install]
+WantedBy=multi-user.target
+

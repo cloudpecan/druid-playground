@@ -1,0 +1,8 @@
+- name: Zookeeper Install
+  hosts: tag_vmgroup_druidmaster
+  become: yes
+  vars_files:
+    - "{{ cluster_vars }}"
+  roles:
+     - { role: zookeeper }
+

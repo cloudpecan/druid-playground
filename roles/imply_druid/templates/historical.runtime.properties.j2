@@ -1,0 +1,23 @@
+{{ ansible_managed }}
+
+druid.service=druid/historical
+druid.port={{ druid_port }}
+
+# HTTP server threads
+druid.server.http.numThreads=50
+# Processing threads and buffers
+druid.processing.buffer.sizeBytes=536870912
+druid.processing.numMergeBuffers=4
+druid.processing.numThreads=31
+druid.processing.tmpDir={{ druid_processing_tmpdir }}
+
+# Segment storage
+druid.segmentCache.locations=[{"path":"/datadrive/nvme01/druid/segment-cache","maxSize"\:1100000000000}]
+druid.server.maxSize=1100000000000
+
+# Query cache
+druid.historical.cache.useCache=true
+druid.historical.cache.populateCache=true
+druid.cache.type=caffeine
+druid.cache.sizeInBytes=2000000000
+

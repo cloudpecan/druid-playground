@@ -1,0 +1,19 @@
+plugin: azure_rm
+
+include_vm_resource_groups:
+  - druid-playground-rg
+
+auth_source: auto
+
+host_key_checking: False
+
+keyed_groups:
+  - prefix: tag
+    key: tags
+  - prefix: loc
+    key: location
+
+compose:
+  ansible_host: public_ip_address
+
+plain_host_names: yes

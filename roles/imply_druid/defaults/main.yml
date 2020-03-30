@@ -1,0 +1,89 @@
+systemd_dir: /etc/systemd/system
+installation_dir: /opt/imply
+version: "{{ imply_version }}"
+distribution: "imply-{{ version }}.tar.gz"
+basedir: "{{ installation_dir }}/imply-{{ version }}"
+symlink_target: "{{ installation_dir }}/imply-{{ version }}"
+symlink: /opt/imply/current
+symlink_with_version:  "/opt/imply/current/imply-{{ version }}"
+url: "http://static.imply.io/release/imply-{{ version }}.tar.gz"
+pull_deps_command: 'java -classpath "dist/druid/lib/*" -Ddruid.extensions.directory="dist/druid/extensions" org.apache.druid.cli.Main tools pull-deps -c org.apache.druid.extensions.contrib:druid-azure-extensions:0.16.0-incubating'
+common_runtime_properties:  "{{ symlink }}/conf/druid/_common"
+druid_storage_account_name: "{{ druid_storage }}"
+
+
+base_config_dir: "{{ symlink }}/conf"
+base_config_druid_dir: "{{ base_config_dir }}/druid"
+config_dir_common: "{{ base_config_druid_dir }}/_common"
+config_dir_historical: "{{ base_config_druid_dir }}/historical"
+config_dir_middlemanager: "{{ base_config_druid_dir }}/middleManager"
+config_dir_router: "{{ base_config_druid_dir }}/router"
+config_dir_coordinator: "{{ base_config_druid_dir }}/coordinator"
+config_dir_overlord: "{{ base_config_druid_dir }}/overlord"
+config_dir_broker: "{{ base_config_druid_dir }}/broker"
+config_dir_pivot: "{{ base_config_dir }}/pivot"
+
+https_pivot_cert: "{{ druid_https_pivot_cert | default('host-ca1-signed.crt') }}"
+https_pivot_key: "{{ druid_https_pivot_key | default('snakeoil-ca-1.key') }}"
+
+connection_string_meta_data_password: "{{ mysql_password }}"
+connection_string_meta_data_user: "{{ mysql_user_connection }}"
+connection_string_meta_data_uri: "jdbc:mysql://{{ connection_string_meta_data_user }}:3306/{{ druid_database }}?useSSL=true&requireSSL=false"
+
+druid_indexer_logs_type: azure
+druid_indexer_logs_container: druidlogs
+druid_indexer_logs_prefix: logs
+
+druid_azure_account: "{{ druid_storage }}"
+druid_azure_segment_container: "{{ segment_container }}"
+druid_database: "{{ druid_db }}"
+pivot_database: "{{ pivot_db }}"
+
+coordinator_ram: 12g
+coordinator_tmp_dir: /mnt/var/tmp
+druid_port: 8083
+druid_processing_tmpdir: /mnt/var/druid/processing
+druid_segment_cache_location: /mnt/var/druid/segment-cache
+#druid_server_maxsize: 1100000000000
+druid_server_maxsize: 5000000000
+historical_runtime_properties: "{{ symlink }}/conf/druid/historical"
+
+historical_ram: 6g
+max_directory_memory_size: 6g
+historical_tmp_dir: /mnt/var/tmp
+
+middlemanager_ram: 128m
+middlemanager_hadoop_tmp_dir: /mnt/var/hadoop-tmp
+middlemanager_tmp_dir: /mnt/var/tmp
+middle_manager_dir: "{{ symlink }}/conf/druid/middleManager"
+middle_manager_druid_indexer_base_task_dir: /mnt/var/druid/task
+middle_manager_druid_processing_buffer_sizebytes: 536870912
+middle_manager_druid_port: 8091
+middle_manager_druid_worker_capacity: 3
+middle_manager_processing_tmpdir: /mnt/var/druid/processing
+
+overlord_dir: "{{ symlink }}/conf/druid/overlord"
+overlord_ram: 6g
+overlord_tmpdir: /mnt/var/tmp
+
+broker_dir: "{{ symlink }}/conf/druid/broker"
+broker_druid_port: 8082
+broker_http_numthreads: 60
+
+broker_http_numconnections: 20
+broker_http_maxqueuebytes: 50000000
+broker_processing_buffer_sizebytes: 1000000000
+broker_processing_num_mergebuffers: 4
+broker_processing_num_threads: 7
+broker_processing_tmp_dir: /mnt/var/druid/processing
+broker_ram: 6g
+broker_max_direct_memory_size: 6g
+broker_tmpdir: /mnt/var/tmp
+
+router_dir:  "{{ symlink }}/conf/druid/router" 
+router_ram: 512m
+router_tmpdir: /mnt/var/tmp
+router_max_director_memory_size: 512m
+
+pivot_var_dir: /mnt/var/pivot
+pivot_port: 9095

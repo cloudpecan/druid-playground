@@ -1,0 +1,7 @@
+# Maintained by Ansible
+{% for key, value in zk.properties.items() %}
+{{key}}={{value}}
+{% endfor %}
+{% for host in groups['tag_vmgroup_druidmaster'] %}
+server.{{ hostvars[host]['zookeeper_id'] | default(groups.tag_vmgroup_druidmaster.index(host) + 1)}}={{ host }}:2888:3888
+{% endfor %}

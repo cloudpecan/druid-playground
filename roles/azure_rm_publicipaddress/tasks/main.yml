@@ -1,0 +1,9 @@
+- name: Create Public IP Address
+  azure_rm_publicipaddress:
+    resource_group: "{{ rg }}"
+    allocation_method: "{{ allocation }}"
+    name: "{{ public_ip_name }}{{ item }}"
+    sku: "{{ public_ip_sku_type }}"
+    tags:
+      provisioner: ansible
+  with_sequence: start="{{ StartCount }}" end="{{ EndCount }}"

@@ -1,0 +1,13 @@
+- name: Create Network Security Group With Rules
+  azure_rm_securitygroup:
+    resource_group: "{{ rg }}"
+    name: "{{ nsg_name }}"
+    rules:
+      - name: "{{ rule_name }}"
+        protocol: "{{ protocol_type }}"
+        destination_port_range: "{{ dest_port_range }}"
+        access: "{{ access_type }}"
+        priority: "{{ priority_score }}"
+        direction: "{{ direction_type }}"
+    tags:
+      provisioner: ansible

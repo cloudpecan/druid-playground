@@ -1,0 +1,209 @@
+- name: Bootstrap Azure Infrastructure for Druid Playground
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  vars_files:
+    - "{{ cluster_vars }}"
+  tasks:
+    - name: Resource Group Creation
+      include_role:
+        name: azure_rm_resourcegroup
+        apply:
+          tags: always
+      vars:
+        rg: "{{ resource_group }}"
+        location: "{{ region }}"
+      tags: rg
+
+    - name: Virtual Network Creation
+      include_role:
+        name: azure_rm_virtualnetwork
+        apply:
+          tags: always
+      vars:
+        rg: "{{ resource_group  }}"
+        vnet: "{{ virtual_network }}"
+        address_prefixes_cidr: "{{ address_prefixes }}"
+      tags: vnet
+
+    - name: Public IP Address Creation
+      include_role:
+        name: azure_rm_publicipaddress
+        apply:
+          tags: always
+      vars:
+        rg: "{{ resource_group }}"
+        allocation: "{{ public_ip_allocation }}"
+        public_ip_name: "{{ prefix }}{{ outer_item.server }}-{{ public_ip }}"
+        public_ip_sku_type: "{{ public_ip_sku }}"
+        StartCount: "{{ outer_item.start }}"
+        EndCount: "{{ outer_item.end }}"
+      loop: "{{ druid_servers }}"
+      loop_control:
+        loop_var: outer_item
+      tags: publicip
+
+    - name: Security Group Creation
+      include_role:
+        name: azure_rm_securitygroup
+        apply:
+          tags: always
+      vars:
+        name: "{{ nsg_name }}"
+        rg: "{{ resource_group }}"
+        rule_name: "{{ outer_item.name }}"
+        protocol_type: "{{ outer_item.protocol }}"
+        dest_port_range: "{{ outer_item.destination_port_range }}"
+        access_type: "{{ outer_item.access }}"
+        priority_score: "{{ outer_item.priority}}"
+        direction_type: "{{ outer_item.direction }}"
+      loop: "{{ nsg_rules }}"
+      loop_control:
+        loop_var: outer_item
+      tags: nsg
+
+    - name: Subnet Creation
+      include_role:
+        name: azure_rm_subnet
+        apply:
+          tags: always
+      vars:
+        rg: "{{ resource_group }}"
+        subnet: "{{ subnet_name }}"
+        subnet_address_cidr: "{{ subnet_address_prefixes }}"
+        vnet: "{{ virtual_network }}"
+        nsg: "{{ nsg_name }}"
+      tags: subnet
+
+    - name: Virtual Network Interface Card
+      include_role:
+        name: azure_rm_networkinterface
+        apply:
+          tags: always
+      vars:
+        rg: "{{ resource_group }}"
+        nic_name: "{{ prefix }}{{outer_item.server}}-nic"
+        vnet: "{{ virtual_network }}"
+        subnet: "{{ subnet_name }}"
+        public_ip_name: "{{ prefix }}{{ outer_item.server }}-{{ public_ip }}"
+        ipconfig_name: "{{ prefix }}{{ outer_item.server }}-ipconfig"
+        StartCount: "{{ outer_item.start }}"
+        EndCount: "{{ outer_item.end }}"
+      loop: "{{ druid_servers }}"
+      loop_control:
+        loop_var: outer_item
+      tags: nic
+
+    - name: Virtual Machine Creation
+      include_role:
+        name: azure_rm_virtualmachine
+        apply:
+          tags: always
+      vars:
+        rg: "{{ resource_group }}"
+        vm_name: "{{ prefix }}{{ outer_item.server }}-vm"
+        vm_size: "{{ outer_item.image_size }}"
+        admin_username: "{{ admin_user }}"
+        vnet: "{{ virtual_network }}"
+        default_disk_type: "{{ disk_type }}"
+        nic: "{{ prefix }}{{outer_item.server}}-nic"
+        ssh_public_key_path: "{{ ssh_key_path }}"
+        key: "{{ ssh_key }}"
+        subnet: "{{ subnet_name }}"
+        public_ip_name: "{{ prefix }}{{ outer_item.server }}-{{ public_ip }}"
+        image_offer: "{{ outer_item.offer }}"
+        image_publisher:  "{{ outer_item.publisher }}"
+        sku_type: "{{ outer_item.sku}}"
+        image_version: "{{ outer_item.version}}"
+        StartCount: "{{ outer_item.start }}"
+        EndCount: "{{ outer_item.end }}"
+        tag:  "{{ outer_item.vm_group}}"
+      loop: "{{ druid_servers }}"
+      loop_control:
+        loop_var: outer_item
+      tags: vm
+
+
+    - name: Create A Storage Account
+      azure_rm_storageaccount:
+        resource_group: "{{ resource_group }}"
+        name: "{{ druid_storage }}"
+        type: Standard_RAGRS
+        tags:
+          Ansible: storage
+      tags:
+        - storage
+        - blob
+
+    - name: Remove Existing Druid Storage Containers
+      azure_rm_storageblob:
+        resource_group: "{{ resource_group }}"
+        storage_account_name: "{{ druid_storage }}"
+        container: "{{ item }}"
+        state: absent
+      with_items:
+        - log-container
+        - segment-container
+      tags: blob
+
+    - name: Create Blob Storage Container
+      azure_rm_storageblob:
+        resource_group: "{{ resource_group }}"
+        storage_account_name: "{{ druid_storage }}"
+        container: "{{ item }}"
+        state: present
+        force: yes
+        tags:
+          Ansible: blob
+      with_items:
+        - log-container
+        - segment-container
+      tags: blob
+
+    - name: Create MySQL Server
+      azure_rm_mysqlserver:
+        resource_group: "{{ resource_group }}"
+        name: "{{ mysql_server_name }}"
+        sku:
+          name: B_Gen5_1
+          tier: Basic
+        location: eastus2
+        storage_mb: 5120
+        enforce_ssl: True
+        version: 5.6
+        admin_username: "{{ mysql_username }}"
+        admin_password: "{{ mysql_password }}"
+        tags:
+          Ansible: mysql
+      tags: mysql
+
+    - name: Create (or update) MySQL Database
+      azure_rm_mysqldatabase:
+        resource_group: "{{ resource_group }}"
+        server_name: "{{ mysql_server_name }}"
+        name: "{{ item }}"
+        charset: utf8mb4
+        force_update: True
+      with_items: "{{ druid_mysql_dbs }}"
+      tags: mysql
+
+    - name: Create (or update) MySQL firewall rule
+      azure_rm_mysqlfirewallrule:
+        resource_group: "{{ resource_group }}"
+        server_name: "{{ mysql_server_name }}"
+        name: default_playground_rule
+        start_ip_address: 0.0.0.0
+        end_ip_address: 255.255.255.255
+      tags: mysql
+
+    - name: Destroy Bootrapped Resource Group Including Resources It Contains
+      azure_rm_resourcegroup:
+        name: "{{ resource_group }}"
+        force_delete_nonempty: yes
+        state: absent
+      async: 900
+      poll: 10
+      when: destroy_rg|default(false)|bool
+      tags: destroy
+
+

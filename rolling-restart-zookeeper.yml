@@ -1,0 +1,9 @@
+- name: Rolling Restart Zookeeper
+  hosts: tag_vmgroup_druidmaster
+  become: yes
+  serial: 1
+  tasks:
+  - name: Restart Zookeeper Service
+    systemd:
+      state: restarted
+      name: confluent-zookeeper

@@ -1,0 +1,15 @@
+-server
+-Xms{{ historical_ram }}
+-Xmx{{ historical_ram }}
+-XX:MaxDirectMemorySize={{ max_directory_memory_size }}
+-XX:+ExitOnOutOfMemoryError
+-Duser.timezone=UTC
+-Dfile.encoding=UTF-8
+-Djava.io.tmpdir=/mnt/var/tmp
+-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.port=60100
+-Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false
+

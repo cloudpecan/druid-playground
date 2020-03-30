@@ -1,0 +1,7 @@
+cert_compressed: certs.tgz
+cert_dir: /var/ssl/private
+cert_files: /var/ssl/certs.tgz
+ssl_type: self_signed
+cert_gen: "{{ ssl_type }}"
+ssl_self_signed_jks_prefixes: host
+ssl_keystore_trustore_prefix: host
