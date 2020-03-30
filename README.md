@@ -36,11 +36,11 @@ az login --service-principal --username de8b0ea9-76bd-4248-95dd-990592bf8c78 --p
 ```
 - Installing Ansible with Azure Python libraries
 
-The vault is leveraged to decrypt the encrypted variables stored unedr **vars/imply/general_vars.yml**. Replace the encrypted and plain text variables with your own by using ansible-vault.
+The vault is leveraged to decrypt the encrypted variables stored under **vars/imply/general_vars.yml**. Replace the encrypted variables using ansible-vault and the plain text variables where appropriate with your own.
   
 ### License key
 
-The imply license key can be found under **vars/imply/imply_license_key.yml**. The content is an encrypted format of a licence key following the format below:
+The imply license key can be found under **vars/imply/imply_license_key.yml**. Get your licence from Imply and paste the key content to the 'content' yaml key below. Maintain the yaml file structure, the playbook expects the layout below. The content is an encrypted format of a licence key following the format below:
 
 ```
 license_key:
@@ -52,7 +52,7 @@ license_key:
 
 ### Dynamic Inventory
 
-The playbooks leverage dynamic inventories. The file <b>inventory.azure_rm.yml<b> with contents below is provided:
+The playbooks leverage dynamic inventories. The file **inventory.azure_rm.yml** with contents below is provided:
   
 ```
 plugin: azure_rm
@@ -78,7 +78,7 @@ plain_host_names: yes
 ```
 ### Creating the Infrastructure
 
-Running the following command will spin up basic infrastructure to use Imply's distribution of Druid. Of course this a playground, so for convenience sake we leverage public IPs and do not intend to enforce security best practices when spinning up the basic infrastructure. The idea is you that you create and destroy for experimentation purposes only and limit by allowable source IPs and keys.
+Running the following command will spin up basic infrastructure to use Imply's distribution of Druid. Of course this a playground, so for convenience sake we leverage public IPs when spinning up the basic infrastructure. The idea is you that you create and destroy for experimentation purposes only and limit by allowable source IPs and keys.
 
 ```
 ansible-playbook -i inventory.azure_rm.yml bootstrap_infra.yml --vault-password-file /tmp/password.txt 
